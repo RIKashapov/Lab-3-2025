@@ -5,7 +5,6 @@ import pandas as pd
 from clearml import Task, Dataset
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from catboost import CatBoostRegressor
-import joblib
 import matplotlib.pyplot as plt
 
 TARGET = "temp_avg"
@@ -47,6 +46,7 @@ def make_supervised(df: pd.DataFrame, horizon: int) -> pd.DataFrame:
 
 def main():
     task = Task.init(project_name="Lab3", task_name="train_catboost_7d")
+    task.output_uri = "http://localhost:8081"
     logger = task.get_logger()
 
     params = {
