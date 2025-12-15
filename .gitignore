@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+.venv/
+venv/
+.env
+artifacts/
+catboost_info/
+
+.idea/
+.vscode/
+
+.ipynb_checkpoints/
+
+*.pid
+
+.DS_Store

@@ -6,7 +6,7 @@ from clearml.automation import (
 )
 from clearml.automation.optuna import OptimizerOptuna
 
-BASE_TASK_ID = "e0bc2b210afe4688bd493a8e0639ef56"
+BASE_TASK_ID = "4d45675b457f4881836d15ed6d7bd713"
 
 def main():
     optimizer = HyperParameterOptimizer(

@@ -1,0 +1,151 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                6
+              ]
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f8752ed5-693c-49cb-9199-ac389f932ac8",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const city = \"Moscow\";\n\nconst now = new Date();\n\nconst dates = [];\nfor (let i = 1; i <= 7; i++) {\n  const d = new Date(now);\n  d.setDate(now.getDate() + i - 2);\n  dates.push(d.toISOString().slice(0, 10));\n}\n\nreturn [\n  {\n    json: {\n      city,\n      dates\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8c83c297-cda7-48de-832e-e028e388fa70",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8002/predict",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.toJsonString() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "f75308ab-f082-44fa-912b-2dfd53d69988",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const city = $json.city;\nconst preds = $json.predictions || [];\n\nlet text = `🌤 Прогноз на 7 дней: *${city}*\\n\\n`;\nfor (const p of preds) {\n  text += `• ${p.date} (h${p.horizon}): *${p.temp_avg.toFixed(1)}°C*\\n`;\n}\n\nreturn [{ json: { text } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "2da307c0-841a-4eb6-a77c-695a7be1812e",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "chatId": "858122920",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "fa5ab184-4258-4fa7-91c1-c9ab7d0c745f",
+      "name": "Send a text message",
+      "webhookId": "f65fb980-5e74-4b73-ae4a-33f7e80dfb17",
+      "credentials": {
+        "telegramApi": {
+          "id": "gSS7fm20AV61mUHL",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "38b32e07-e29c-46b4-bce6-ad15977ba83a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c9c80d1d3aa94b891da340d59766c62b0c72780446c0b6e207beb4be0c10b49b"
+  },
+  "id": "iom2JOkk5BM6B24U",
+  "tags": []
+}

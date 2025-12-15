@@ -1,0 +1,106 @@
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - clearml_net
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.22
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - clearml_net
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - clearml_net
+
+  clearml-apiserver:
+    image: allegroai/clearml:latest
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - elasticsearch
+      - redis
+    command: ["apiserver"]
+    ports:
+      - "8008:8008"
+    environment:
+      - CLEARML_MONGODB_SERVICE_HOST=mongo
+      - CLEARML_REDIS_SERVICE_HOST=redis
+      - CLEARML_ELASTIC_SERVICE_HOST=elasticsearch
+    networks:
+      clearml_net:
+        aliases:
+          - apiserver
+
+  clearml-webserver:
+    image: allegroai/clearml:latest
+    restart: unless-stopped
+    depends_on:
+      - clearml-apiserver
+    command: ["webserver"]
+    ports:
+      - "8080:80"
+    environment:
+      - CLEARML_API_HOST=http://clearml-apiserver:8008
+    networks:
+      - clearml_net
+
+  clearml-fileserver:
+    image: allegroai/clearml:latest
+    restart: unless-stopped
+    depends_on:
+      - clearml-apiserver
+      - mongo
+      - redis
+    command: ["fileserver"]
+    ports:
+      - "8081:8081"
+    environment:
+      - CLEARML_MONGODB_SERVICE_HOST=mongo
+      - CLEARML_REDIS_SERVICE_HOST=redis
+    networks:
+      clearml_net:
+        aliases:
+          - fileserver
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - TZ=Europe/Berlin
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
+      - TG_TOKEN=bot8542391107:AAFYcvH-1JtO0a_fmv4f6QKf61W8uYAqSZQ
+      - N8N_PROTOCOL=https
+      - N8N_PORT=5678
+      - WEBHOOK_URL=https://0cfc72c9eb4c.ngrok-free.app
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - clearml_net
+
+
+volumes:
+  mongo_data:
+  es_data:
+  redis_data:
+  n8n_data:
+
+networks:
+  clearml_net:
+    driver: bridge
